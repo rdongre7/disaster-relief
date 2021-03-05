@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+	<title>Disaster Relief</title>
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script>
+		d3version3 = d3
+		window.d3 = null
+		// test it worked
+		console.log('v3', d3version3.version)
+	</script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js"></script>
+	<script>
+		console.log('v4', d3.version)
+	</script>
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js'></script>
+
+	<script src="scripts/d3.legend.js"></script>
+	<style>
+		body {
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      color: #1dcaff
+			font-size: 11px;
+			font-weight: 300;
+			text-align: center;
+			cursor: default;
+      background: #17202a
+		}
+
+		.legend {
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+			fill: #333333;
+		}
+
+		.tooltip {
+			fill: #333333;
+		}
+
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: #000;
+			shape-rendering: crispEdges;
+		}
+
+		.x.axis path {
+			display: none;
+		}
+
+		.axis .domain {
+			display: none;
+		}
+
+		text {
+			font: 15px arial;
+		}
+	</style>
+
+</head>
+
+<body>
+	<div style="text-align: center; font-size: 48px; color: #1dcaff;"><strong> Disaster Relief </strong></div>
+	<div style="text-align: center; font-size: 24px; color: #ffffff"> analyzing a twitter dataset on seven models to direct resource flow during disasters <br /><br /> </div>
+	<div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong> About Our Project <span style="color: #ffffff"> (@about)</span>  </strong>
+		<p style="font-size: 16px; color: #ffffff"> In recent years, natural disasters have become an increasingly prevalent problem. Just a week ago, Hurricane Dorian wiped out the Bahamas, leaving thousands homeless, and completely destroying the area. We decided to use social media as a platform through which those who are in need can easily reach out to others. To do this, we filtered tweets from Hurricane Sandy separating them out based on whether they were from people who were asking for help or people who were simply offering prayers or commentary but were not in urgent need of help.</p>
+	</div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong> Research <span style="color: #ffffff"> (@res)</span>  </strong>
+		<p style="font-size: 16px; color: #ffffff"> Aken, B., Risch, J., Krestel, R. & Loser, A., (2018). Challenges for data classification: An in-depth error analysis. Beuth University of Applied Sciences. <https://aclweb.org/anthology/W18-5105> <ul
+				style="font-size: 16px; color: #ffffff">
+				<li> Used Twitter dataset.</li>
+				<li> Raises concerns about out-of-vocabulary words, sentence dynamics (long-range dependencies), multi-word phrases.</li>
+				<li> Most models have shortcomings that lead to false negatives/positives with identifiable attributes (e.g. rhetorical questions, quotes of other comments) </li>
+				</ul>
+				<p style="font-size: 16px; color: #ffffff">
+					Chakrabarty, N., (2019). A machine learning approach to text classification. Jalpaiguri Government Engineering College. <https://arxiv.org/ftp/arxiv/papers/1903/1903.06765.pdf> </p> <ul style="font-size: 16px; color: #ffffff">
+						<li>Used Twitter dataset.</li>
+						<li> Applied bag-of-words using word count vectorizer; set up term-document matrix; applied tf-idf.</li>
+				</p>
+	</div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong> Preprocessing <span style="color: #ffffff"> (@pre)</span>  </strong>
+		<p style="font-size: 16px; color: #ffffff">First, we standardized our data by removing the punctuation and converting everything to lowercase.
+			Then, to give the best accuracy possible, we decided to turn our words into numbers with three vectorizers: CountVectorizer, HashingVectorizer,
+			and TfidfVectorizer. A quick run-through showed that TfidfVectorizer gave the best results, so we decided to use that.
+			<br /> </p>
+	</div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong>  Caveats <span style="color: #ffffff"> (@caveats)</span>  </strong>
+		<p style="font-size: 16px; color: #ffffff"> We trained our dataset with roughly 3% of the size of the actual dataset, due to time and computer memory constraints.
+			This gives somewhat artificially inflated values, due to the test sets being much smaller. (for reference, when we tried training the GNB classifier with the full dataset, the
+			acccuracies were ~5% lower.) Also, with BERT, we used an sklearn wrapper that causes the training and test times to be significantly higher
+			than if we'd used Google's official TF library (something that we'd like to change soon.)
+			</p>
+	</div>
+	<div style="margin-left: 40px; margin-right: 40px; background: white"><svg width="2000" height="500" id="svg2" style="margin-left: 40px; margin-right: 40px; background: white"></svg><br/><br/></div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong>  Bar Chart Viz <span style="color: #ffffff"> (@bar)</span>  </strong>
+		<p style="font-size: 16px; color: #ffffff"> Our bar chart visualisation compares the time taken to test and train each model in relation to accuracy of performance. All of our models are within 12% of each other in terms of accuracy, but the ones that are
+			clearly the most efficient at training are Gaussian Naive Bayes, K Nearest Neighbours, Random Forest, and Logistic Regression. In terms of testing efficiency, Gaussian Naive Bayes, Random Forest, Decision Tree, and Logistic Regression perform
+			the best. Overall, logistic regression seems to achieve the best balance between accuracy, training efficiency, and testing efficiency.
+			<br /> </p> 	</div>
+
+	<div class="radarChart" style="margin-left: 40px; margin-right: 40px; background: white">
+
+	<script src="scripts/radarChart.js"></script> <br/> <br/> </div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong> Radar Chart Viz <span style="color: #ffffff"> (@radar) </span> </strong>
+		<p style="font-size: 16px; color: #ffffff"> Our radar chart visualisation compares the accuracy of each model per category of relief. As you can see, the BERT classifier is the best at detecting the help category; Gaussian Naive Bayes, decision trees, random
+			forests are the best at detecting food/water; logistic regression and K nearest neighbours are the best at detecting power; support vector machine is the best at detecting stranded; decision trees and K nearest neighbours are the best at detecting
+			clothes; and K nearest neighbours is the best at detecting donations.
+			<br /> </p>
+	</div>
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong>Tweet Detection <span style="color: #ffffff"> (@detect) </span> </strong> <br /><input id="myText" type="text" name="lname">
+		<input type="submit" value="Submit" onclick="commentTox()"></p>
+	<strong>
+		<p style="font-size: 40px" id="demo"></p>
+	</strong></div>
+
+	<script>
+		function getNots(lst) {
+			var count = 0;
+			for (var i = 0; i < lst.length; i++) {
+				if (lst[i] === "not")
+					count++;
+			}
+			return count;
+		}
+
+		function commentTox() {
+			var strArr = document.getElementById("myText").value.split(" ");
+			var display = "Irrelevant";
+
+      var foodWater = ["food","storing","medicine", "canned", "sandwiches",
+      "soup", "hot food", "pet food", "cat food", "dinner", "meals needed",
+      "thanksgiving", "Thanksgiving"];
+      var power = ["#nopower", "no power", "electricity", "no lights",
+      "blackout", "current", "flash lights", "batteries", "lantern",
+      "flashlight", "candle", "dark"];
+      var donations = ["#donations", "donations", "financial relief",
+      "cash", "savings", "http", "donate", "fund", "supplies", "$",
+      "drive", "money", "charity", "aid", "volunteer", "shelter",
+      "contact"];
+      var stranded = ["house", "transportation", "first responders",
+      "red cross", "displaced", "pets", "reunite", "adopted", "flooded",
+      "flooding", "basement", "evacuate", "evacuation", "homeless",
+      "destroyed", "boats", "trucks", "ruined", "breaking", "no home",
+      "water on my block"];
+      var clothes = ["underwear", "clothing", "clothes"];g
+      var helpWebsites = ["http", "contact", "Contact"];
+      for(var i=0; i<strArr.length; i++){
+        str = strArr[i].toLowerCase();
+          if (foodWater.includes(str)){
+            display = "Food/Water";
+          }
+          else if (power.includes(str)) {
+            display = "Power";
+          }
+          else if (donations.includes(str)){
+            display = "Donations";
+          }
+          else if (stranded.includes(str)){
+            display = "Stranded";
+          }
+          else if (clothes.includes(str)) {
+            display = "Clothes";
+          }
+          else if (helpWebsites.includes(str)){
+            display = "Help Websites";
+          }
+        }
+      console.log()
+
+
+
+			document.getElementById("demo").innerHTML = display;
+		}
+	</script>
+  <div style="background: white">
+	<script>
+		const data2 = [{
+				'State': 'Gaussian Naive Bayes',
+				'Training Time': 1.6079,
+				'Testing Time': 0.6052,
+				'Accuracy': 93.79
+			}, {
+				'State': 'Support Vector Machine',
+				'Training Time': 146.8206,
+				'Testing Time': 45.3989,
+				'Accuracy': 96.87
+			},
+			{
+				'State': 'K Nearest Neighbors',
+				'Training Time': 3.5802,
+				'Testing Time': 132.0329,
+				'Accuracy': 97.23
+			},
+			{
+				'State': 'Random Forest',
+				'Training Time': 4.5756,
+				'Testing Time': .07483,
+				'Accuracy': 96.84
+			},
+			{
+				'State': 'Decision Tree',
+				'Training Time': 49.1713,
+				'Testing Time': .07766,
+				'Accuracy': 96.97
+			},
+			{
+				'State': 'Logistic Regression',
+				'Training Time': 2.7116,
+				'Testing Time': .04997,
+				'Accuracy': 96.4
+			},
+			{
+				'State': 'BERT*',
+				'Training Time': 158.3623,
+				'Testing Time': 4.7110,
+				'Accuracy': 86.4
+			}
+		];
+
+		const keys = Object.keys(data2[0]).slice(1);
+
+		const tip = d3.tip().html(d => d.value);
+
+		const margin2 = {
+				top: 40,
+				right: 80,
+				bottom: 20,
+				left: 80
+			},
+			width2 = 1080,
+			height2 = 500,
+			innerWidth = width2 - margin2.left - margin2.right,
+			innerHeight = height2 - margin2.top - margin2.bottom,
+			svg2 = d3.select('body').select('#svg2').attr('width', width2).attr('height', height2).style('color', 'white')
+		g = svg2.append('g').attr('transform', `translate(${margin2.left}, ${margin2.top})`);
+
+		svg2.call(tip)
+
+		const x0 = d3.scaleBand()
+			.rangeRound([0, innerWidth])
+			.paddingInner(.1);
+
+		const x1 = d3.scaleBand()
+			.padding(.05);
+
+		const y = d3.scaleLinear()
+			.rangeRound([innerHeight, 0]);
+
+		const z = d3.scaleOrdinal()
+			.range(["#EDC951", "#CC333F", "#00A0B0"]);
+
+		x0.domain(data2.map(d => d.State));
+		x1.domain(keys).rangeRound([0, x0.bandwidth()]);
+		y.domain([0, d3.max(data2, d => d3.max(keys, key => d[key]))]).nice();
+		g.append('g')
+			.selectAll('g')
+			.data(data2)
+			.enter()
+			.append('g')
+			.attr('transform', d => 'translate(' + x0(d.State) + ',0)')
+			.selectAll('rect')
+			.data(d => keys.map(key => {
+				return {
+					key: key,
+					value: d[key]
+				}
+			}))
+			.enter().append('rect')
+			.attr('x', d => x1(d.key))
+			.attr('y', d => y(d.value))
+			.attr('width', x1.bandwidth())
+			.attr('height', d => innerHeight - y(d.value))
+			.attr('fill', d => z(d.key))
+			.on('mouseover', tip.show)
+			.on('mouseout', tip.hide)
+		g.append('g')
+			.attr('class', 'axis-bottom')
+			.attr('transform', 'translate(0,' + innerHeight + ')')
+			.call(d3.axisBottom(x0));
+
+		g.append('g')
+			.attr('class', 'axis-left')
+			.call(d3.axisLeft(y).ticks(null, 's'))
+			.append('text')
+			.attr('x', 10)
+			.attr('y', y(y.ticks().pop()) + 10)
+			.attr('dy', '0.32em')
+			.attr('fill', '#000')
+			.style('transform', 'rotate(-90deg)')
+			.attr('font-weight', 'bold')
+			.attr('text-anchor', 'end')
+			.text('Time (s) / Accuracy (%)');
+
+		const legend = g.append('g')
+			.attr('font-family', 'sans-serif')
+			.attr('font-size', 10)
+			.attr('text-anchor', 'end')
+			.selectAll('g')
+			.data(keys.slice().reverse())
+			.enter().append('g')
+			.attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
+
+		legend.append('rect')
+			.attr('x', innerWidth - 19)
+			.attr('width', 10)
+			.attr('height', 10)
+			.attr('fill', z);
+
+		legend.append('text')
+			.attr('x', innerWidth - 32)
+			.attr('y', 6)
+			.attr('dy', '0.32em')
+			.text(d => d);
+	</script></div>
+	<script>
+		var margin = {
+				top: 100,
+				right: 100,
+				bottom: 100,
+				left: 100
+			},
+			width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
+			height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+		var data = [
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.8624
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.908
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.9264
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9192
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9304
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.92
+				},
+				{
+					axis: "BERT",
+					value: 0.96
+				},
+			],
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.9768
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.992
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.9864
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9888
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9864
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.9848
+				},
+				{
+					axis: "BERT",
+					value: 0.84
+				}
+			],
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.9056
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.9576
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.9736
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9632
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9712
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.9496
+				},
+				{
+					axis: "BERT",
+					value: 0.94
+				}
+			],
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.9904
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.9968
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.996
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9976
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9952
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.9952
+				},
+				{
+					axis: "BERT",
+					value: 0.84
+				}
+			],
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.9152
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.9656
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.9576
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9528
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9504
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.9456
+				},
+				{
+					axis: "BERT",
+					value: 0.84
+				}
+			],
+			[{
+					axis: "Gaussian Naive Bayes",
+					value: 0.9768
+				},
+				{
+					axis: "Support Vector Machine",
+					value: 0.992
+				},
+				{
+					axis: "K Nearest Neighbors",
+					value: 0.9936
+				},
+				{
+					axis: "Random Forest",
+					value: 0.9888
+				},
+				{
+					axis: "Decision Tree",
+					value: 0.9848
+				},
+				{
+					axis: "Logistic Regression",
+					value: 0.9888
+				},
+				{
+					axis: "BERT",
+					value: 0.84
+				}
+			],
+
+		];
+		var color = d3version3.scale.ordinal()
+			.range(["#EDC951", "#CC333F", "#00A0B0", "#FF7F0E", "#f98b95", "#aff8ff"]);
+
+		var radarChartOptions = {
+			w: width,
+			h: height,
+			margin: margin,
+			maxValue: 1,
+			levels: 2,
+			roundStrokes: true,
+			color: color
+		};
+		//Call function to draw the Radar chart
+		RadarChart(".radarChart", data, radarChartOptions);
+	</script>
+
+  <div style="text-align: left; margin-left: 40px; margin-right: 40px; font-size: 30px; color: #1dcaff; border-style: solid;
+  border-width: 0.5px; border-color: #c0deed; padding: 20px"><strong>Future Goals <span style="color: #ffffff"> (@future)</span> </strong>
+		<p style="font-size: 16px; color: #ffffff">
+			<b> tf-idf with word frequency data: </b> As mentioned earlier, using tf-idf to find word importance would help eliminate common words that just crowd out the dataset.
+			<br><br> <b> measuring precision/recall: </b> To get more information on strengths/weaknesses of each classifier.
+			<br><br> <b> regression analysis: </b> A regression can provide a probability of a comment being in a specific category rather than a binary yes/no. This would require a different dataset.</p>
+	</div>
+
+</body>
+
+</html>
